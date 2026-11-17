@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#102a43">
+  <title>Student Management | CampusDesk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#dashboard" aria-label="CampusDesk home"><span class="brand-mark">C</span><span>Campus<span class="brand-light">Desk</span><small>ACADEMIC PORTAL</small></span></a>
+      <div class="nav-label">WORKSPACE</div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <button class="nav-item active" data-view="dashboard"><span class="nav-icon">▦</span> Overview</button>
+        <button class="nav-item" data-view="students"><span class="nav-icon">♙</span> Students</button>
+        <button class="nav-item" data-view="courses"><span class="nav-icon">▤</span> Courses</button>
+        <button class="nav-item" data-view="attendance"><span class="nav-icon">◷</span> Attendance</button>
+        <button class="nav-item" data-view="results"><span class="nav-icon">▥</span> Results</button>
+      </nav>
+      <div class="sidebar-bottom"><div class="secure-note"><span class="secure-dot"></span><span><b>Database connected</b><small>MongoDB · StudentManagementDB</small></span></div><div class="user-chip"><span class="avatar">AD</span><span><b>Administrator</b><small>Records manager</small></span><span class="more">···</span></div></div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar"><div class="breadcrumbs"><span>Workspace</span><span class="crumb-slash">/</span><b id="crumb-title">Overview</b></div><div class="topbar-right"><span class="today-label" id="today-label"></span><span class="top-avatar">AD</span></div></header>
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+      <section class="view active" id="view-dashboard">
+        <div class="page-heading"><div><div class="eyebrow">ACADEMIC OVERVIEW</div><h1>Good day, Administrator <span class="wave">✦</span></h1><p>Here’s what’s happening across your student records.</p></div><button class="button button-primary" data-action="quick-student"><span>＋</span> Add student</button></div>
+        <div class="stat-grid">
+          <article class="stat-card"><div class="stat-top"><span class="stat-icon blue">♙</span><span class="stat-label">TOTAL STUDENTS</span></div><div class="stat-value" id="count-students">—</div><div class="stat-foot">Student records</div></article>
+          <article class="stat-card"><div class="stat-top"><span class="stat-icon purple">▤</span><span class="stat-label">ACTIVE COURSES</span></div><div class="stat-value" id="count-courses">—</div><div class="stat-foot">In the catalogue</div></article>
+          <article class="stat-card"><div class="stat-top"><span class="stat-icon green">◷</span><span class="stat-label">ATTENDANCE ENTRIES</span></div><div class="stat-value" id="count-attendance">—</div><div class="stat-foot">Attendance records</div></article>
+          <article class="stat-card"><div class="stat-top"><span class="stat-icon amber">▥</span><span class="stat-label">RESULTS RECORDED</span></div><div class="stat-value" id="count-results">—</div><div class="stat-foot">Course results</div></article>
+        </div>
+        <div class="dashboard-grid">
+          <article class="panel"><div class="panel-heading"><div><h2>Recent attendance</h2><p>Latest attendance activity</p></div><button class="text-button" data-goto="attendance">View all →</button></div><div id="recent-attendance" class="mini-list"></div></article>
+          <article class="panel"><div class="panel-heading"><div><h2>Recent results</h2><p>Recently updated course marks</p></div><button class="text-button" data-goto="results">View all →</button></div><div id="recent-results" class="mini-list"></div></article>
+        </div>
+        <div class="notice"><span>ⓘ</span><div><b>Data relationships are checked</b><p>Attendance and results must refer to existing student and course records. Student course registrations are stored on the student record.</p></div></div>
+      </section>
+
+      <section class="view" id="view-students">
+        <div class="page-heading"><div><div class="eyebrow">RECORDS</div><h1>Students</h1><p>Manage student profiles and course registrations.</p></div><button class="button button-primary" data-action="new" data-type="students">＋ Add student</button></div>
+        <div class="panel form-panel"><div class="panel-heading"><div><h2 id="students-form-title">Add a student</h2><p>Fields marked * are required.</p></div><button class="button button-quiet cancel-edit hidden" type="button" data-cancel="students">Cancel edit</button></div>
+          <form id="form-students" class="form-grid"><input type="hidden" name="_id"><label>Student ID *<input name="studentId" required maxlength="32" placeholder="e.g. 24-BCT-001"></label><label>First name *<input name="firstName" required maxlength="60"></label><label>Last name *<input name="lastName" required maxlength="60"></label><label>Gender *<select name="gender" required><option value="">Choose gender</option><option>Female</option><option>Male</option><option>Other</option><option>Prefer not to say</option></select></label><label>Programme *<input name="programme" required maxlength="120" placeholder="e.g. Bachelor of IT"></label><label>Year of study *<input name="yearOfStudy" type="number" min="1" max="10" step="1" required></label><fieldset class="course-checks"><legend>Registered courses</legend><div class="check-options" data-course-checkboxes="students"><span class="muted">Add courses to the catalogue first.</span></div></fieldset><div class="form-actions"><button class="button button-primary" type="submit">Save student</button><button class="button button-quiet" type="reset">Clear</button></div></form>
+        </div>
+        <div class="panel table-panel"><div class="panel-heading"><div><h2>Student directory</h2><p id="students-total">Loading records…</p></div><div class="search-box"><span>⌕</span><input id="search-students" placeholder="Search students…" aria-label="Search students"></div></div><div class="table-wrap"><table><thead><tr><th>STUDENT</th><th>STUDENT ID</th><th>PROGRAMME</th><th>YEAR</th><th>COURSES</th><th></th></tr></thead><tbody id="table-students"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="view-courses">
+        <div class="page-heading"><div><div class="eyebrow">ACADEMIC CATALOGUE</div><h1>Courses</h1><p>Maintain course codes, names, credit units, and lecturers.</p></div></div>
+        <div class="panel form-panel"><div class="panel-heading"><div><h2 id="courses-form-title">Add a course</h2><p>Course codes must be unique.</p></div><button class="button button-quiet cancel-edit hidden" type="button" data-cancel="courses">Cancel edit</button></div>
+          <form id="form-courses" class="form-grid course-form"><input type="hidden" name="_id"><label>Course code *<input name="courseCode" required maxlength="24" placeholder="e.g. BBCT 2114"></label><label>Course name *<input name="courseName" required maxlength="120"></label><label>Credit units *<input name="creditUnits" type="number" min="1" max="60" required></label><label>Lecturer *<input name="lecturer" required maxlength="120"></label><div class="form-actions"><button class="button button-primary" type="submit">Save course</button><button class="button button-quiet" type="reset">Clear</button></div></form>
+        </div>
+        <div class="panel table-panel"><div class="panel-heading"><div><h2>Course catalogue</h2><p id="courses-total">Loading records…</p></div><div class="search-box"><span>⌕</span><input id="search-courses" placeholder="Search courses…" aria-label="Search courses"></div></div><div class="table-wrap"><table><thead><tr><th>COURSE</th><th>COURSE CODE</th><th>CREDIT UNITS</th><th>LECTURER</th><th></th></tr></thead><tbody id="table-courses"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="view-attendance">
+        <div class="page-heading"><div><div class="eyebrow">CLASS MONITORING</div><h1>Attendance</h1><p>Record attendance by student, course, and date.</p></div></div>
+        <div class="panel form-panel"><div class="panel-heading"><div><h2 id="attendance-form-title">Record attendance</h2><p>One entry per student, course, and date.</p></div><button class="button button-quiet cancel-edit hidden" type="button" data-cancel="attendance">Cancel edit</button></div>
+          <form id="form-attendance" class="form-grid"><input type="hidden" name="_id"><label>Student *<select name="studentId" required data-student-select><option value="">Select student</option></select></label><label>Course *<select name="courseCode" required data-course-select><option value="">Select course</option></select></label><label>Attendance date *<input name="attendanceDate" type="date" required></label><label>Status *<select name="status" required><option value="">Choose status</option><option>Present</option><option>Absent</option><option>Late</option></select></label><div class="form-actions"><button class="button button-primary" type="submit">Save attendance</button><button class="button button-quiet" type="reset">Clear</button></div></form>
+        </div>
+        <div class="panel table-panel"><div class="panel-heading"><div><h2>Attendance log</h2><p id="attendance-total">Loading records…</p></div><div class="search-box"><span>⌕</span><input id="search-attendance" placeholder="Search student or course…" aria-label="Search attendance"></div></div><div class="table-wrap"><table><thead><tr><th>STUDENT ID</th><th>COURSE</th><th>DATE</th><th>STATUS</th><th></th></tr></thead><tbody id="table-attendance"></tbody></table></div></div>
+      </section>
+
+      <section class="view" id="view-results">
+        <div class="page-heading"><div><div class="eyebrow">ACADEMIC PERFORMANCE</div><h1>Results</h1><p>Record coursework and examination marks.</p></div></div>
+        <div class="panel form-panel"><div class="panel-heading"><div><h2 id="results-form-title">Record a result</h2><p>Grade is calculated automatically from the average mark.</p></div><button class="button button-quiet cancel-edit hidden" type="button" data-cancel="results">Cancel edit</button></div>
+          <form id="form-results" class="form-grid"><input type="hidden" name="_id"><label>Student *<select name="studentId" required data-student-select><option value="">Select student</option></select></label><label>Course *<select name="courseCode" required data-course-select><option value="">Select course</option></select></label><label>Coursework mark *<input name="courseworkMark" type="number" min="0" max="100" step="0.01" required></label><label>Examination mark *<input name="examinationMark" type="number" min="0" max="100" step="0.01" required></label><div class="form-actions"><button class="button button-primary" type="submit">Save result</button><button class="button button-quiet" type="reset">Clear</button></div></form>
+        </div>
+        <div class="panel table-panel"><div class="panel-heading"><div><h2>Results register</h2><p id="results-total">Loading records…</p></div><div class="search-box"><span>⌕</span><input id="search-results" placeholder="Search student or course…" aria-label="Search results"></div></div><div class="table-wrap"><table><thead><tr><th>STUDENT ID</th><th>COURSE</th><th>COURSEWORK</th><th>EXAM</th><th>AVERAGE</th><th>GRADE</th><th></th></tr></thead><tbody id="table-results"></tbody></table></div></div>
+      </section>
+      <footer class="footer"><span>CampusDesk Student Management</span><span>MongoDB · StudentManagementDB</span></footer>
+    </main>
+  </div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
