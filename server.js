@@ -1,18 +1,50 @@
 require('dotenv').config();
+const dns = require('dns');
+
+// Configure reliable DNS servers for SRV resolution on Windows
+try {
+  const currentServers = dns.getServers();
+  dns.setServers(['8.8.8.8', '1.1.1.1', ...currentServers]);
+} catch (e) {
+  // Ignore if setting DNS servers is not permitted
+}
 
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 const { MongoClient, ObjectId } = require('mongodb');
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
 const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
 const dbName = process.env.MONGODB_DB || 'StudentManagementDB';
-const client = new MongoClient(mongoUri);
+const client = new MongoClient(mongoUri, {
+  serverSelectionTimeoutMS: 10000,
+  connectTimeoutMS: 10000
+});
 let db;
 
+app.use(cors());
 app.use(express.json({ limit: '1mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+
+const publicDir = path.join(__dirname, 'public');
+if (fs.existsSync(publicDir)) {
+  app.use(express.static(publicDir));
+}
+app.use(express.static(__dirname));
+
+app.get('/', (_req, res) => {
+  const publicIndex = path.join(__dirname, 'public', 'index.html');
+  const rootIndex = path.join(__dirname, 'index.html');
+  if (fs.existsSync(publicIndex)) {
+    return res.sendFile(publicIndex);
+  }
+  if (fs.existsSync(rootIndex)) {
+    return res.sendFile(rootIndex);
+  }
+  res.status(404).send('index.html not found.');
+});
 
 const collections = () => ({
   students: db.collection('Students'),
@@ -223,6 +255,20 @@ for (const [key, cfg] of Object.entries(config)) {
 }
 
 app.use('/api', (_req, _res, next) => next(new HttpError(404, 'API route not found.')));
+
+// Serve index.html for all other GET requests (SPA fallback for direct navigation/refresh)
+app.get('*', (_req, res) => {
+  const publicIndex = path.join(__dirname, 'public', 'index.html');
+  const rootIndex = path.join(__dirname, 'index.html');
+  if (fs.existsSync(publicIndex)) {
+    return res.sendFile(publicIndex);
+  }
+  if (fs.existsSync(rootIndex)) {
+    return res.sendFile(rootIndex);
+  }
+  res.status(404).send('index.html not found.');
+});
+
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(err.status || 500).json({ error: err.status ? err.message : 'An unexpected server error occurred.' });
@@ -255,6 +301,17 @@ async function start() {
 
 start().catch(error => {
   console.error('Could not start the application. Ensure MongoDB is running and MONGODB_URI is correct.', error.message);
+  if (error.message.includes('alert number 80') || error.message.includes('tlsv1 alert internal error')) {
+    console.error('\n--> MongoDB Atlas SSL/TLS Error: The remote MongoDB Atlas cluster rejected the TLS handshake.');
+    console.error('--> Primary Cause: Your current public IP address is not whitelisted in MongoDB Atlas.');
+    console.error('--> Fix:');
+    console.error('    1. Open https://cloud.mongodb.com and log in.');
+    console.error('    2. Navigate to "Security" -> "Network Access".');
+    console.error('    3. Click "Add IP Address" and select "Add Current IP Address" (or allow 0.0.0.0/0 for testing).');
+  } else if (error.message.includes('querySrv ECONNREFUSED')) {
+    console.error('\n--> DNS SRV Lookup Error: Unable to resolve _mongodb._tcp SRV record.');
+    console.error('--> Fix: Switch to the standard non-SRV connection string provided in your .env file.');
+  }
   process.exit(1);
 });
 

@@ -1,11 +1,25 @@
 require('dotenv').config();
+const dns = require('dns');
+
+// Configure reliable DNS servers for SRV resolution on Windows
+try {
+  const currentServers = dns.getServers();
+  dns.setServers(['8.8.8.8', '1.1.1.1', ...currentServers]);
+} catch (e) {
+  // Ignore if setting DNS is not permitted
+}
+
 const { MongoClient } = require('mongodb');
 
 const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017';
 const dbName = process.env.MONGODB_DB || 'StudentManagementDB';
 
 async function main() {
-  const client = new MongoClient(uri);
+  const client = new MongoClient(uri, {
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000
+  });
+
   await client.connect();
   try {
     const db = client.db(dbName);
@@ -46,4 +60,11 @@ async function main() {
   } finally { await client.close(); }
 }
 
-main().catch(error => { console.error('Could not load sample records:', error.message); process.exit(1); });
+main().catch(error => {
+  console.error('Could not load sample records:', error.message);
+  if (error.message.includes('alert number 80') || error.message.includes('tlsv1 alert internal error')) {
+    console.error('\n--> MongoDB Atlas SSL/TLS Error: The remote MongoDB Atlas cluster rejected the connection.');
+    console.error('--> Fix: Ensure your current IP address is whitelisted in MongoDB Atlas under Security -> Network Access.');
+  }
+  process.exit(1);
+});
